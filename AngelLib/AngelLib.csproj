@@ -42,9 +42,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\LinkServer\Settings.cs" />
+    <Compile Include="Network\ClientPackets\CMKey.cs" />
     <Compile Include="Network\ClientPackets\Login.cs" />
+    <Compile Include="Network\ServerPackets\ErrorInfo.cs" />
     <Compile Include="Network\ServerPackets\ServerPacket.cs" />
     <Compile Include="Network\ServerPackets\Challenge.cs" />
+    <Compile Include="Network\ServerPackets\SMKey.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\ConsoleWriter.cs" />
     <Compile Include="Utils\HexParser.cs" />

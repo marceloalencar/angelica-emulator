@@ -23,6 +23,7 @@ using System.Threading;
 using AngelLib.Network.ClientPackets;
 using System.Security.Cryptography;
 using System.Text;
+using System.Linq;
 
 namespace LinkServer
 {
@@ -32,6 +33,8 @@ namespace LinkServer
         private Settings _settings;
         private byte[] _challengeKey;
         private bool _isEncrypted;
+        private byte[] _smKey;
+        private byte[] _cmKey;
 
         public bool IsConnected;
 
@@ -56,12 +59,16 @@ namespace LinkServer
                     while (_tcpClient.Connected && IsConnected)
                     {
                         int buflen = stream.Read(recvbuf, 0, 8192);
-                        PacketHandler(recvbuf, buflen);
+                        if (!_isEncrypted)
+                            ClearPacketHandler(recvbuf, buflen);
+                        else
+                            EncryptedPacketHandler(recvbuf, buflen);
                     }
                 }
             }
             catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 Console.WriteLine(e.StackTrace);
             }
             finally
@@ -71,7 +78,7 @@ namespace LinkServer
             }
         }
 
-        private void PacketHandler(byte[] recvbuf, int buflen)
+        private void ClearPacketHandler(byte[] recvbuf, int buflen)
         {
             if (buflen == 0)
             {
@@ -93,10 +100,20 @@ namespace LinkServer
                     byte[] tmpPass = Encoding.ASCII.GetBytes("test");
                     SHA256 sha256 = SHA256.Create();
                     byte[] hash = sha256.ComputeHash(tmpPass);
-                    Console.WriteLine("Client: {0}", BitConverter.ToString(loginPacket.Hash));
-                    Console.WriteLine("Server: {0}", BitConverter.ToString(hash));
-                    //TODO: Verify on DBServer if login is valid
-                    //TODO: Reply if it works or not
+                    if (hash.SequenceEqual(loginPacket.Hash))
+                    {
+                        SMKey smkeyPacket = new SMKey();
+                        SendReply(smkeyPacket.GetBytes());
+                        _smKey = smkeyPacket.GetSMKey();
+                        _isEncrypted = true;
+                    }
+                    else
+                    {
+                        ErrorInfo errorPacket = new ErrorInfo(2);
+                        Console.WriteLine(BitConverter.ToString(errorPacket.GetBytes()));
+                        SendReply(errorPacket.GetBytes());
+                        Console.WriteLine("Login error!");
+                    }
                     break;
                 default:
                     IsConnected = false;
@@ -104,6 +121,17 @@ namespace LinkServer
                     Console.WriteLine(BitConverter.ToString(recvbuf, 0, buflen));
                     break;
             }
+        }
+
+        private void EncryptedPacketHandler(byte[] recvbuf, int buflen)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SendReply(byte[] data)
+        {
+            Stream stream = _tcpClient.GetStream();
+            stream.Write(data, 0, data.Length);
         }
     }
 }
