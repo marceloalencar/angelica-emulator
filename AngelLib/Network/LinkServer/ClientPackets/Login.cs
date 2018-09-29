@@ -1,15 +1,11 @@
 ﻿using AngelLib.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace AngelLib.Network.ClientPackets
+namespace AngelLib.Network.LinkServer.ClientPackets
 {
     public class Login
     {
-        private byte _packetId = 0x03;                  // 0x03 = LoginAnnounce
+        private byte _packetId = (byte)LinkServerPacket.LoginRequest;
         private byte _packetLength;
         private byte _usernameLength;
         private string _username;                       // ASCII username
@@ -20,7 +16,7 @@ namespace AngelLib.Network.ClientPackets
         {
             _packetLength = data.UnMarshalByte();
             _usernameLength = data.UnMarshalByte();
-            _username = Encoding.UTF8.GetString(data.UnMarshalBytes(_usernameLength));
+            _username = Encoding.ASCII.GetString(data.UnMarshalBytes(_usernameLength));
             _hashLength = data.UnMarshalByte();
             _hash = data.UnMarshalBytes(_hashLength);
         }

@@ -25,27 +25,34 @@ namespace LinkServer
     internal class ClientListener
     {
         private Settings _settings;
-        private TcpListener _listener;
+        private TcpListener _clientListener;
+        private Database _database;
         private ManualResetEvent _tcpClientConnected;
         private List<ClientConnection> _clients;
 
-        public ClientListener()
+        public ClientListener(Settings settings)
         {
-             _tcpClientConnected = new ManualResetEvent(false);
+            _settings = settings;
+            _tcpClientConnected = new ManualResetEvent(false);
             _clients = new List<ClientConnection>();
         }
 
-        internal void StartServer(int port, Settings settings)
+        internal void ConnectDb()
         {
-            _settings = settings;
-            _listener = new TcpListener(IPAddress.Any, port);
-            _listener.Start();
-            Console.WriteLine("Listening for clients on port {0}", port);
+            Console.WriteLine("Connecting to database...");
+            _database = new Database();
+        }
+
+        internal void StartServer()
+        {
+            _clientListener = new TcpListener(IPAddress.Any, _settings.ClientListenPort);
+            _clientListener.Start();
+            Console.WriteLine("Listening for clients on port {0}", _settings.ClientListenPort);
             while (true)
             {
                 _tcpClientConnected.Reset();
                 Console.WriteLine("Waiting for connections...");
-                _listener.BeginAcceptTcpClient(new AsyncCallback(AcceptClient), _listener);
+                _clientListener.BeginAcceptTcpClient(new AsyncCallback(AcceptClient), _clientListener);
                 _tcpClientConnected.WaitOne();
                 CleanDisconnectedClients();
             }
@@ -56,7 +63,7 @@ namespace LinkServer
             Console.WriteLine("Client connected");
             TcpListener listener = (TcpListener)ar.AsyncState;
             TcpClient tcpClient = listener.EndAcceptTcpClient(ar);
-            ClientConnection client = new ClientConnection(tcpClient, _settings);
+            ClientConnection client = new ClientConnection(tcpClient, _settings, _database);
             _tcpClientConnected.Set();
             _clients.Add(client);
             client.StartSession();

@@ -2,11 +2,11 @@
 using AngelLib.Utils;
 using System;
 
-namespace AngelLib.Network.ServerPackets
+namespace AngelLib.Network.LinkServer.ServerPackets
 {
     public class Challenge : ServerPacket
     {
-        private byte _packetId = 0x01;                  // 0x01 = ServerChallenge
+        private byte _packetId = (byte)LinkServerPacket.Challenge;
         private byte _packetLength = 0x3A;
         private byte _keyLength = 16;                   // ?????????
         private byte _serverLoad = 0;                   // 0 - 255

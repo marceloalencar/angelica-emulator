@@ -29,8 +29,9 @@ namespace LinkServer
             ConsoleWriter.WriteRegion("Starting LinkServer");
             Console.WriteLine("Loading configuration files...");
             serverSettings = Settings.LoadSettings();
-            ClientListener listener = new ClientListener();
-            listener.StartServer(serverSettings.ClientListenPort, serverSettings);
+            ClientListener listener = new ClientListener(serverSettings);
+            listener.ConnectDb();
+            listener.StartServer();
         }
     }
 }

@@ -13,34 +13,38 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+using AngelLib.Configuration.LinkServer;
+using AngelLib.Network.Cryptography;
+using AngelLib.Network.LinkServer;
+using AngelLib.Network.LinkServer.ClientPackets;
+using AngelLib.Network.LinkServer.ServerPackets;
+using AngelLib.Utils;
 using System;
 using System.IO;
 using System.Net.Sockets;
-using AngelLib.Utils;
-using AngelLib.Configuration.LinkServer;
-using AngelLib.Network.ServerPackets;
-using System.Threading;
-using AngelLib.Network.ClientPackets;
 using System.Security.Cryptography;
 using System.Text;
-using System.Linq;
 
 namespace LinkServer
 {
     internal class ClientConnection
     {
         private TcpClient _tcpClient;
+        private Database _database;
         private Settings _settings;
-        private byte[] _challengeKey;
         private bool _isEncrypted;
+        private string _username;
+        private byte[] _challengeKey;
         private byte[] _smKey;
         private byte[] _cmKey;
+        private RC4 C2S_Crypto;
 
         public bool IsConnected;
 
-        public ClientConnection(TcpClient tcpClient, Settings settings)
+        public ClientConnection(TcpClient tcpClient, Settings settings, Database database)
         {
             _tcpClient = tcpClient;
+            _database = database;
             _settings = settings;
             _isEncrypted = false;
             IsConnected = true;
@@ -52,7 +56,7 @@ namespace LinkServer
             {
                 using (Stream stream = _tcpClient.GetStream())
                 {
-                    Challenge challengePacket = new Challenge(Program.serverSettings);
+                    Challenge challengePacket = new Challenge(_settings);
                     _challengeKey = challengePacket.GetChallengeKey();
                     stream.Write(challengePacket.GetBytes(), 0, challengePacket.GetBytes().Length);
                     byte[] recvbuf = new byte[8192];
@@ -92,19 +96,23 @@ namespace LinkServer
             byte packetid = data.UnMarshalByte();
             switch (packetid)
             {
-                case 0x03:
+                case (byte)LinkServerPacket.LoginRequest:
                     Login loginPacket = new Login(data);
-                    Console.WriteLine("User {0} is trying to login", loginPacket.Username);
-                    //Password: test
-                    //SHA-256(password) = 9F86D081884C7D659A2FEAA0C55AD015A3BF4F1B2B0B822CD15D6C15B0F00A08
-                    byte[] tmpPass = Encoding.ASCII.GetBytes("test");
-                    SHA256 sha256 = SHA256.Create();
-                    byte[] hash = sha256.ComputeHash(tmpPass);
-                    if (hash.SequenceEqual(loginPacket.Hash))
+                    _username = loginPacket.Username;
+                    Console.WriteLine("User {0} is trying to login", _username);
+                    string passHash = BitConverter.ToString(loginPacket.Hash).Replace("-", string.Empty);
+                    string dbHashString = _database.GetUserPasswd(_username, passHash);
+                    if (dbHashString.Equals(passHash))
                     {
                         SMKey smkeyPacket = new SMKey();
                         SendReply(smkeyPacket.GetBytes());
                         _smKey = smkeyPacket.GetSMKey();
+                        HMACMD5 hmacmd5 = new HMACMD5(Encoding.ASCII.GetBytes(_username));
+                        byte[] array = new byte[loginPacket.Hash.Length + _smKey.Length];
+                        loginPacket.Hash.CopyTo(array, 0);
+                        _smKey.CopyTo(array, loginPacket.Hash.Length);
+                        byte[] RC4_C2SKEY = hmacmd5.ComputeHash(array);
+                        C2S_Crypto = new RC4(RC4_C2SKEY);
                         _isEncrypted = true;
                     }
                     else
@@ -125,7 +133,17 @@ namespace LinkServer
 
         private void EncryptedPacketHandler(byte[] recvbuf, int buflen)
         {
-            throw new NotImplementedException();
+            if (buflen == 0)
+            {
+                Console.WriteLine("Client sent empty packet. Disconnecting...");
+                IsConnected = false;
+                return;
+            }
+            byte[] arrData = new byte[buflen];
+            Array.Copy(recvbuf, arrData, buflen);
+            C2S_Crypto.decrypt(arrData);
+
+            Console.WriteLine(BitConverter.ToString(arrData));
         }
 
         public void SendReply(byte[] data)

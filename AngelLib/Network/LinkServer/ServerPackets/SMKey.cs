@@ -1,11 +1,11 @@
 ﻿using AngelLib.Utils;
 using System;
 
-namespace AngelLib.Network.ServerPackets
+namespace AngelLib.Network.LinkServer.ServerPackets
 {
     public class SMKey : ServerPacket
     {
-        private byte _packetId = 0x02;             // 0x02 = SMKey
+        private byte _packetId = (byte)LinkServerPacket.KeyExchange;             // 0x02 = SMKey
         private byte _packetLength = 0x12;
         private byte _keyLength = 16;
         private byte[] _key;

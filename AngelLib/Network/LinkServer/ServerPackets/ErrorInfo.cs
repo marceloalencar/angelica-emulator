@@ -1,12 +1,11 @@
 ﻿using AngelLib.Utils;
-using System;
 using System.Text;
 
-namespace AngelLib.Network.ServerPackets
+namespace AngelLib.Network.LinkServer.ServerPackets
 {
     public class ErrorInfo : ServerPacket
     {
-        private byte _packetId = 0x05;             // 0x05 = ErrorInfo
+        private byte _packetId = (byte)LinkServerPacket.ErrorInfo;
         private byte _packetLength;
         private int _errorCode;                //configs/servererror.txt) 1 = 10150
         private byte _msgLength;

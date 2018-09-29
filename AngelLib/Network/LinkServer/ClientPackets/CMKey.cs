@@ -1,10 +1,10 @@
 ﻿using AngelLib.Utils;
 
-namespace AngelLib.Network.ClientPackets
+namespace AngelLib.Network.LinkServer.ClientPackets
 {
     class CMKey
     {
-        private byte _packetId = 0x02;             // 0x02 = SMKey
+        private byte _packetId = (byte)LinkServerPacket.KeyExchange;
         private byte _packetLength;
         private byte _keyLength;
         private byte[] _key;
