@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 using AngelLib.Configuration.LinkServer;
-using AngelLib.Network.Cryptography;
+using AngelLib.Network.Algorithm;
 using AngelLib.Network.LinkServer;
 using AngelLib.Network.LinkServer.ClientPackets;
 using AngelLib.Network.LinkServer.ServerPackets;
@@ -33,11 +33,15 @@ namespace LinkServer
         private Database _database;
         private Settings _settings;
         private bool _isEncrypted;
+        private bool _isCompressed;
         private string _username;
+        private byte[] _passwordHash;
         private byte[] _challengeKey;
         private byte[] _smKey;
         private byte[] _cmKey;
         private RC4 C2S_Crypto;
+        private RC4 S2C_Crypto;
+        private MPPC MPPC_Compressor;
 
         public bool IsConnected;
 
@@ -47,7 +51,9 @@ namespace LinkServer
             _database = database;
             _settings = settings;
             _isEncrypted = false;
+            _isCompressed = false;
             IsConnected = true;
+            MPPC_Compressor = new MPPC();
         }
 
         internal void StartSession()
@@ -99,8 +105,9 @@ namespace LinkServer
                 case (byte)LinkServerPacket.LoginRequest:
                     Login loginPacket = new Login(data);
                     _username = loginPacket.Username;
+                    _passwordHash = loginPacket.Hash;
                     Console.WriteLine("User {0} is trying to login", _username);
-                    string passHash = BitConverter.ToString(loginPacket.Hash).Replace("-", string.Empty);
+                    string passHash = BitConverter.ToString(_passwordHash).Replace("-", string.Empty);
                     string dbHashString = _database.GetUserPasswd(_username, passHash);
                     if (dbHashString.Equals(passHash))
                     {
@@ -108,9 +115,9 @@ namespace LinkServer
                         SendReply(smkeyPacket.GetBytes());
                         _smKey = smkeyPacket.GetSMKey();
                         HMACMD5 hmacmd5 = new HMACMD5(Encoding.ASCII.GetBytes(_username));
-                        byte[] array = new byte[loginPacket.Hash.Length + _smKey.Length];
-                        loginPacket.Hash.CopyTo(array, 0);
-                        _smKey.CopyTo(array, loginPacket.Hash.Length);
+                        byte[] array = new byte[_passwordHash.Length + _smKey.Length];
+                        _passwordHash.CopyTo(array, 0);
+                        _smKey.CopyTo(array, _passwordHash.Length);
                         byte[] RC4_C2SKEY = hmacmd5.ComputeHash(array);
                         C2S_Crypto = new RC4(RC4_C2SKEY);
                         _isEncrypted = true;
@@ -118,7 +125,6 @@ namespace LinkServer
                     else
                     {
                         ErrorInfo errorPacket = new ErrorInfo(2);
-                        Console.WriteLine(BitConverter.ToString(errorPacket.GetBytes()));
                         SendReply(errorPacket.GetBytes());
                         Console.WriteLine("Login error!");
                     }
@@ -142,14 +148,40 @@ namespace LinkServer
             byte[] arrData = new byte[buflen];
             Array.Copy(recvbuf, arrData, buflen);
             C2S_Crypto.decrypt(arrData);
-
-            Console.WriteLine(BitConverter.ToString(arrData));
+            Octet data = new Octet(arrData);
+            byte packetid = data.UnMarshalByte();
+            switch (packetid)
+            {
+                case (byte)LinkServerPacket.KeyExchange:
+                    CMKey smkeyPacket = new CMKey(data);
+                    _cmKey = smkeyPacket.GetCMKey();
+                    HMACMD5 hmacmd5 = new HMACMD5(Encoding.ASCII.GetBytes(_username));
+                    byte[] array = new byte[_passwordHash.Length + _cmKey.Length];
+                    _passwordHash.CopyTo(array, 0);
+                    _cmKey.CopyTo(array, _passwordHash.Length);
+                    byte[] RC4_S2CKEY = hmacmd5.ComputeHash(array);
+                    S2C_Crypto = new RC4(RC4_S2CKEY);
+                    _isCompressed = true;
+                    break;
+                default:
+                    IsConnected = false;
+                    Console.WriteLine("Unknown packet. Disconnecting...");
+                    Console.WriteLine(BitConverter.ToString(arrData, 0, arrData.Length));
+                    break;
+            }
         }
 
         public void SendReply(byte[] data)
         {
             Stream stream = _tcpClient.GetStream();
-            stream.Write(data, 0, data.Length);
+            if (!_isCompressed)
+                stream.Write(data, 0, data.Length);
+            else
+            {
+                byte[] compressed = MPPC_Compressor.Compress(data);
+                S2C_Crypto.decrypt(compressed);
+                stream.Write(compressed, 0, compressed.Length);
+            }
         }
     }
 }

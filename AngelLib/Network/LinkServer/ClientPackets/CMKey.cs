@@ -2,7 +2,7 @@
 
 namespace AngelLib.Network.LinkServer.ClientPackets
 {
-    class CMKey
+    public class CMKey
     {
         private byte _packetId = (byte)LinkServerPacket.KeyExchange;
         private byte _packetLength;
@@ -12,7 +12,6 @@ namespace AngelLib.Network.LinkServer.ClientPackets
 
         public CMKey(Octet data)
         {
-            _packetId = data.UnMarshalByte();
             _packetLength = data.UnMarshalByte();
             _keyLength = data.UnMarshalByte();
             _key = data.UnMarshalBytes(_keyLength);

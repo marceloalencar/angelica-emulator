@@ -46,9 +46,10 @@
   <ItemGroup>
     <Compile Include="Configuration\LinkServer\Settings.cs" />
     <Compile Include="Model\User.cs" />
+    <Compile Include="Network\Algorithm\MPPC.cs" />
     <Compile Include="Network\LinkServer\ClientPackets\CMKey.cs" />
     <Compile Include="Network\LinkServer\ClientPackets\Login.cs" />
-    <Compile Include="Network\Cryptography\RC4.cs" />
+    <Compile Include="Network\Algorithm\RC4.cs" />
     <Compile Include="Network\LinkServer\PacketTypes.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\ErrorInfo.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\ServerPacket.cs" />

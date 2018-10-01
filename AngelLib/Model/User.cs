@@ -6,7 +6,7 @@ namespace AngelLib.Model
     {
         [PrimaryKey, AutoIncrement, NotNull]
         public int ID { get; set; }
-        [MaxLength(32), NotNull]
+        [MaxLength(32), Unique, NotNull]
         public string name { get; set; }
         [NotNull]
         public string passwd { get; set; }
