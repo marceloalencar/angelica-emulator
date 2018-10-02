@@ -52,6 +52,7 @@
     <Compile Include="Network\Algorithm\RC4.cs" />
     <Compile Include="Network\LinkServer\PacketTypes.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\ErrorInfo.cs" />
+    <Compile Include="Network\LinkServer\ServerPackets\OnlineAnnounce.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\ServerPacket.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\Challenge.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\SMKey.cs" />

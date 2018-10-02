@@ -1,103 +1,198 @@
 ﻿using System;
-using System.Collections;
-using System.IO;
+using System.Linq;
 
 namespace AngelLib.Network.Algorithm
 {
     public class MPPC
     {
-        private BitArray srcbinary;
-        private int i;
-        private int j;
-        private StreamWriter writer;
+        private const int BLOCK_SIZE = 0x2000;
+
+        private readonly byte[] history;
+        private readonly ushort[] hash;
+        private int histoff;
+        private int legacy_in;
 
         public MPPC()
         {
+            history = new byte[BLOCK_SIZE];
+            hash = new ushort[BLOCK_SIZE];
+            histoff = 0;
+            legacy_in = 0;
         }
 
-        private byte[] BitsToBytesCompressor(BitArray target, int lenght)
+        public byte[] Compress(byte[] input)
         {
-            int[] num = new int[lenght / 8];
-            byte[] bytes = new byte[lenght / 8];
-            for (int i = 0; i < lenght / 8; i++)
+            byte[] ret;
+            if (input.Length > 0 || legacy_in > 0)
             {
-                for (int j = 7; j >= 0; j--)
+                ret = new byte[(9 * (legacy_in + input.Length) >> 3) + 6];
+                BitStream outbits = Update(input, ret);
+                CompressBlock(outbits, legacy_in);
+                ret = ret.Take(outbits.Offset >> 3).ToArray();
+            }
+            else
+            {
+                ret = input;
+            }
+            return ret;
+        }
+
+        private BitStream Update(byte[] input, byte[] output)
+        {
+            int remain = BLOCK_SIZE - histoff - legacy_in;
+            int isize = input.Length;
+            int ioffset = 0;
+            BitStream ostream = new BitStream(output);
+            if (isize >= remain)
+            {
+                Buffer.BlockCopy(input, 0, history, histoff + legacy_in, remain);
+                isize -= remain;
+                ioffset += remain;
+                CompressBlock(ostream, remain + legacy_in);
+                histoff = 0;
+                while (isize >= BLOCK_SIZE)
                 {
-                    if (target[i * 8 + j])
-                    {
-                        num[i] += Convert.ToInt32(Math.Pow(Convert.ToDouble(2), Convert.ToDouble(j)));
-                    }
+                    Buffer.BlockCopy(input, ioffset, history, 0, BLOCK_SIZE);
+                    CompressBlock(ostream, BLOCK_SIZE);
+                    histoff = 0;
+                    isize -= BLOCK_SIZE;
+                    ioffset += BLOCK_SIZE;
                 }
-                bytes[i] = BitConverter.GetBytes(num[i])[0];
             }
-            return bytes;
+            Buffer.BlockCopy(input, ioffset, history, histoff + legacy_in, isize);
+            legacy_in += isize;
+            return ostream;
         }
 
-        private void Copy(BitArray inputbits, int from, BitArray outputbits, int to, int length)
+        private void CompressBlock(BitStream stream, int size)
         {
-            for (int i = 0; i < length; i++)
+            int r = histoff + size;
+            int s = histoff;
+            while (r - s > 2)
             {
-                outputbits[to + i] = inputbits[from + i];
-            }
-        }
-
-        public byte[] PseudoCompress(byte[] src)
-        {
-            int i;
-            BitArray bitArrays = new BitArray((int)src.Length * 9 + 11);
-            int num = 0;
-            int num1 = 0;
-            BitArray bitArrays1 = new BitArray(src);
-            try
-            {
-                ReOrderBitArray(bitArrays1);
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception.ToString());
-            }
-            while (num < bitArrays1.Length)
-            {
-                if (!bitArrays1[num])
+                int p = GetPredecitAddr(s);
+                if (p < s)
                 {
-                    Copy(bitArrays1, num, bitArrays, num + num1, 8);
-                    num += 8;
+                    if (history[p++] == history[s++] && history[p++] == history[s])
+                    {
+                        if (history[p++] == history[++s])
+                        {
+                            for (++s; s < r && history[p] == history[s]; ++s) ++p;
+                            int len = s - histoff;
+                            histoff = s;
+                            PutOff(stream, s - p);
+                            int val = 0, n = 1;
+                            if (len > 3)
+                            {
+                                int high = GetHighestBit(len);
+                                val = len & (1 << high) - 1 | ((1 << (high - 1)) - 1) << high + 1;
+                                n = high << 1;
+                            }
+                            PutBits(stream, val, n);
+                        }
+                        else
+                        {
+                            PutLit(stream, history[histoff++]);
+                            s = histoff;
+                        }
+                    }
+                    else
+                    {
+                        PutLit(stream, history[histoff++]);
+                    }
                 }
                 else
                 {
-                    bitArrays[num + num1] = true;
-                    num1++;
-                    bitArrays[num + num1] = false;
-                    Copy(bitArrays1, num + 1, bitArrays, num + num1 + 1, 7);
-                    num += 8;
+                    PutLit(stream, history[histoff++]);
+                    s = histoff;
                 }
             }
-            for (i = 0; i < 4; i++)
+            if (r - s == 1 || r - s == 2)
             {
-                bitArrays[num + num1 + i] = true;
+                for (int i = 0; i < r - s; i++)
+                    PutLit(stream, history[histoff++]);
             }
-            num += 4;
-            for (i = 0; i < 6; i++)
-            {
-                bitArrays[num + num1 + i] = false;
-            }
-            num += 6;
-            bitArrays.Length = ((num + num1) % 8 == 0 ? num + num1 : num + num1 + (8 - (num + num1) % 8));
-            ReOrderBitArray(bitArrays);
-            return BitsToBytesCompressor(bitArrays, bitArrays.Length);
+            PutOff(stream, 0);
+            stream.Pad();
+            legacy_in = 0;
         }
 
-        private void ReOrderBitArray(BitArray src)
+        private void PutBits(BitStream bits, int val, int n)
         {
-            for (int i = 0; i < src.Length; i += 8)
+            //mm0 keeps the last byte of the previous write so the value can be properly written with mov dword (old_bits OR new_bits)
+            //mm1 keeps byte offset
+            //mm2 keeps bit offset
+            //mm3 temporary register, used for keeping the calculated val and shifting mm0
+            //mm4 is used for getting the final size of the packed array
+            //mm5 is used for moding mm2
+            bits.WriteBits(val, n);
+        }
+        private void PutLit(BitStream bits, int c)
+        {
+            int newc = ((c & 0xFFFF) | ((c & 0x80) << 1)) & 0x17F;
+            int n = 8 | ((c & 0x80) >> 7);
+            PutBits(bits, newc, n);
+        }
+        private void PutOff(BitStream bits, int off)
+        {
+            int newoff = off | 0x3C0;
+            int n = 0x0A;
+            if (off > 0x3F)
             {
-                for (int j = 0; j < 4; j++)
+                if (off > 0x13F)
                 {
-                    bool item = src[i + j];
-                    src[i + j] = src[i + (7 - j)];
-                    src[i + (7 - j)] = item;
+                    newoff = (off - 0x140) | 0xC000;
+                    n = 0x10;
+                }
+                else
+                {
+                    newoff = (off - 0x40) | 0xE00;
+                    n = 0x0C;
                 }
             }
+            PutBits(bits, newoff, n);
+        }
+        private int GetPredecitAddr(int offset)
+        {
+            int index = (0x9E5F * (history[offset + 2] ^ 16 * (history[offset + 1] ^ 16 * history[offset])) >> 4) & 0x1FFF;
+            int ret = hash[index];
+            hash[index] = (ushort)offset;
+            return ret;
+        }
+
+        private int GetHighestBit(int val)
+        {
+            int ret = 31;
+            while ((val & 1 << ret) == 0) ret--;
+            return ret;
+        }
+    }
+
+    class BitStream
+    {
+        private readonly byte[] buffer;
+        public int Offset { get; private set; }
+
+        public BitStream(byte[] buf)
+        {
+            buffer = buf;
+            Offset = 0;
+        }
+
+        public void WriteBits(int val, int n)
+        {
+            int off = Offset & 7;
+            int idx = Offset >> 3;
+            uint v = (uint)((ulong)val << 32 - n - off) | (uint)buffer[idx] << 24;
+            for (int i = 0; i < 4; i++)
+                buffer[idx + i] = (byte)(v >> 24 - (i << 3) & 0xFF);
+            Offset += n;
+        }
+        public void Pad()
+        {
+            int pad_length = (8 - (Offset & 7)) & 7;
+            if (pad_length > 0)
+                WriteBits(0, pad_length);
         }
     }
 }

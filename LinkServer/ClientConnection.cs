@@ -162,6 +162,9 @@ namespace LinkServer
                     byte[] RC4_S2CKEY = hmacmd5.ComputeHash(array);
                     S2C_Crypto = new RC4(RC4_S2CKEY);
                     _isCompressed = true;
+
+                    OnlineAnnounce announcePacket = new OnlineAnnounce();
+                    SendReply(announcePacket.GetBytes());
                     break;
                 default:
                     IsConnected = false;

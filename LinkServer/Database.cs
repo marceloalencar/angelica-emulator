@@ -22,5 +22,12 @@ namespace LinkServer
             else
                 return string.Empty;
         }
+
+        public int GetIdByUsername(string username)
+        {
+            TableQuery<User> found = _connection.Table<User>().
+                Where(v => v.name == username);
+            return found.First().ID;
+        }
     }
 }
