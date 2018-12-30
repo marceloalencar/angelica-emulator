@@ -34,6 +34,7 @@ namespace LinkServer
         private Settings _settings;
         private bool _isEncrypted;
         private bool _isCompressed;
+        private uint _userId;
         private string _username;
         private byte[] _passwordHash;
         private byte[] _challengeKey;
@@ -162,9 +163,19 @@ namespace LinkServer
                     byte[] RC4_S2CKEY = hmacmd5.ComputeHash(array);
                     S2C_Crypto = new RC4(RC4_S2CKEY);
                     _isCompressed = true;
-
-                    OnlineAnnounce announcePacket = new OnlineAnnounce();
+                    _userId = _database.GetIdByUsername(_username);
+                    OnlineAnnounce announcePacket = new OnlineAnnounce(_userId);
                     SendReply(announcePacket.GetBytes());
+                    break;
+                case (byte)LinkServerPacket.RoleList:
+                    RoleList roleListPacket = new RoleList(data);
+                    Console.WriteLine("TODO: Get Roles by ID");
+                    LastLoginInfo loginInfo = new LastLoginInfo(_userId);
+                    SendReply(loginInfo.GetBytes());
+                    //Console.WriteLine("TODO: Iterate over roles and send them");
+                    //// Finally...
+                    //RoleListRe finalRole = new RoleListRe(-1, _userId);
+                    //SendReply(finalRole.GetBytes());
                     break;
                 default:
                     IsConnected = false;

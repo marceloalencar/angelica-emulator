@@ -23,7 +23,7 @@ namespace LinkServer
                 return string.Empty;
         }
 
-        public int GetIdByUsername(string username)
+        public uint GetIdByUsername(string username)
         {
             TableQuery<User> found = _connection.Table<User>().
                 Where(v => v.name == username);

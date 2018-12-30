@@ -6,6 +6,9 @@
         KeyExchange    = 0x02,
         LoginRequest   = 0x03,
         OnlineAnnounce = 0x04,
-        ErrorInfo      = 0x05
+        ErrorInfo      = 0x05,
+        RoleList       = 0x52,
+        RoleListRe     = 0x53,
+        LastLoginInfo  = 0x8F
     }
 }

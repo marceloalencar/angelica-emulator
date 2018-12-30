@@ -8,7 +8,7 @@ namespace AngelLib.Configuration.LinkServer
     public class Settings
     {
         private static Settings _settings;
-        private string _clientSignature = "33303030303062653863356237353234653235623634303763373561393530343136";
+        private string _clientSignature = "33303030303063633932356330653161656535623634303763373561393530343136";
         private int _clientListenPort = 29000;
         private bool _isPvP = false;
         private bool _moneyBonus = true;

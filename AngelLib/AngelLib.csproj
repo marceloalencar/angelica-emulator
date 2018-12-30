@@ -50,9 +50,12 @@
     <Compile Include="Network\LinkServer\ClientPackets\CMKey.cs" />
     <Compile Include="Network\LinkServer\ClientPackets\Login.cs" />
     <Compile Include="Network\Algorithm\RC4.cs" />
+    <Compile Include="Network\LinkServer\ClientPackets\RoleList.cs" />
     <Compile Include="Network\LinkServer\PacketTypes.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\ErrorInfo.cs" />
+    <Compile Include="Network\LinkServer\ServerPackets\LastLoginInfo.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\OnlineAnnounce.cs" />
+    <Compile Include="Network\LinkServer\ServerPackets\RoleListRe.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\ServerPacket.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\Challenge.cs" />
     <Compile Include="Network\LinkServer\ServerPackets\SMKey.cs" />
@@ -60,6 +63,7 @@
     <Compile Include="Utils\ConsoleWriter.cs" />
     <Compile Include="Utils\HexParser.cs" />
     <Compile Include="Utils\Octet.cs" />
+    <Compile Include="Utils\UnixTime.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
