@@ -14,7 +14,7 @@ namespace AngelLib.Network.LinkServer.ServerPackets
         private byte _serverFlags;                      // Server flags
         private uint _unknown2 = 0;                     // 00000000
         private byte[] _key;                            // Random 8 bytes key
-        private byte[] _gameVersion = { 0, 1, 5, 7 };   // 1.5.7
+        private byte[] _gameVersion = { 0, 1, 5, 9 };   // 1.5.9
         private byte _authMethod = 0x01;                // SHA-256
         private byte _clientSignatureLength;
         private byte[] _clientSignature;                // Timestamps

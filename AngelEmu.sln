@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2036
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngelLib", "AngelLib\AngelLib.csproj", "{890580FB-69B1-4FBB-8BEF-A1794E6BBEDB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinkServer", "LinkServer\LinkServer.csproj", "{624B7E6F-1C1C-4CA2-AF44-1734FE0D218B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PWClientHashGrabber2", "PWClientHashGrabber2\PWClientHashGrabber2.csproj", "{2CCA12B5-49B5-4DD1-B5E7-639FF22C6282}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{624B7E6F-1C1C-4CA2-AF44-1734FE0D218B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{624B7E6F-1C1C-4CA2-AF44-1734FE0D218B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{624B7E6F-1C1C-4CA2-AF44-1734FE0D218B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CCA12B5-49B5-4DD1-B5E7-639FF22C6282}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CCA12B5-49B5-4DD1-B5E7-639FF22C6282}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CCA12B5-49B5-4DD1-B5E7-639FF22C6282}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CCA12B5-49B5-4DD1-B5E7-639FF22C6282}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
