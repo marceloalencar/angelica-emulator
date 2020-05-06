@@ -6,10 +6,10 @@ namespace AngelLib.Network.LinkServer.ServerPackets
     {
         private byte _packetId = (byte)LinkServerPacket.RoleListRe;
         private ushort _packetLength;
-        private int _unknown1 = 0;
+        private uint _unknown1 = 0;
         private int _slot;
         private uint _userId;
-        private uint _unknown2 = 0;
+        private uint _randomUint = 0;
         private byte[] _charData;
 
         public RoleListRe(int slot, uint userId)
@@ -31,7 +31,7 @@ namespace AngelLib.Network.LinkServer.ServerPackets
             data.Marshal(_unknown1);
             data.Marshal(_slot);
             data.Marshal(_userId);
-            data.Marshal(_unknown2);
+            data.Marshal(_randomUint);
             data.Marshal(_charData);
             return data.GetBytes();
         }

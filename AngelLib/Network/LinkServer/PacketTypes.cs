@@ -9,6 +9,7 @@
         ErrorInfo      = 0x05,
         RoleList       = 0x52,
         RoleListRe     = 0x53,
+        KeepAlive      = 0x5A,
         LastLoginInfo  = 0x8F
     }
 }

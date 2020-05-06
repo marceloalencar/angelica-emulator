@@ -169,13 +169,16 @@ namespace LinkServer
                     break;
                 case (byte)LinkServerPacket.RoleList:
                     RoleList roleListPacket = new RoleList(data);
-                    Console.WriteLine("TODO: Get Roles by ID");
+                    Console.WriteLine("TODO: Get Roles by User ID");
                     LastLoginInfo loginInfo = new LastLoginInfo(_userId);
-                    SendReply(loginInfo.GetBytes());
-                    //Console.WriteLine("TODO: Iterate over roles and send them");
-                    //// Finally...
-                    //RoleListRe finalRole = new RoleListRe(-1, _userId);
-                    //SendReply(finalRole.GetBytes());
+                    //SendReply(loginInfo.GetBytes());
+                    Console.WriteLine("TODO: Iterate over roles and send them");
+                    // Finally...
+                    RoleListRe finalRole = new RoleListRe(-1, _userId);
+                    SendReply(finalRole.GetBytes());
+                    break;
+                case (byte)LinkServerPacket.KeepAlive:
+                    Console.WriteLine("KeepAlive!");
                     break;
                 default:
                     IsConnected = false;

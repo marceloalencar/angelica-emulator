@@ -7,6 +7,7 @@ namespace AngelLib.Network.LinkServer.ServerPackets
         private byte _packetId = (byte) LinkServerPacket.OnlineAnnounce;
         private byte _packetLength = 29;
         private uint _userId;
+        private uint _randomUint = 0;
 
         public OnlineAnnounce(uint userId)
         {
@@ -19,7 +20,7 @@ namespace AngelLib.Network.LinkServer.ServerPackets
             data.Marshal(_packetId);
             data.Marshal(_packetLength);
             data.Marshal(_userId);
-            data.Marshal(0);
+            data.Marshal(_randomUint);
             data.Marshal(0);
             data.Marshal((byte)0x03);
             data.Marshal(0);

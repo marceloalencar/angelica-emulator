@@ -8,18 +8,18 @@ namespace AngelLib.Network.LinkServer.ServerPackets
         private byte _packetId = (byte)LinkServerPacket.LastLoginInfo;
         private byte _packetLength = 20;
         private uint _userId;                // User ID from database
-        private uint _unknown;               // Marker ?
+        private uint _randomUint;            // Marker ?
         private uint _lastLoginTimestamp;    // Unix timestamp
-        private byte[] _lastLoginIPAddr;
-        private byte[] _currentIPAddr;
+        private uint _lastLoginIPAddr;
+        private uint _currentIPAddr;       // In reverse order
 
         public LastLoginInfo(uint userId)
         {
             _userId = userId;
-            _unknown = 0;
+            _randomUint = 0;
             _lastLoginTimestamp = UnixTime.ToTimestamp(DateTime.Now);
-            _lastLoginIPAddr = new byte[4];
-            _currentIPAddr = new byte[4];
+            _lastLoginIPAddr = 0;
+            _currentIPAddr = 0;
         }
 
         public override byte[] GetBytes()
@@ -28,7 +28,7 @@ namespace AngelLib.Network.LinkServer.ServerPackets
             data.Marshal(_packetId);
             data.Marshal(_packetLength);
             data.Marshal(_userId);
-            data.Marshal(_unknown);
+            data.Marshal(_randomUint);
             data.Marshal(_lastLoginTimestamp);
             data.Marshal(_lastLoginIPAddr);
             data.Marshal(_currentIPAddr);
